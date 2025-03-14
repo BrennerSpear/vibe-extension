@@ -1,34 +1,24 @@
-# Chrome Extension TypeScript Starter
+# Vibe Extension
 
-![build](https://github.com/chibat/chrome-extension-typescript-starter/workflows/build/badge.svg)
+A Chrome extension that allows you to send the same prompt to multiple AI tools simultaneously.
 
-Chrome Extension, TypeScript and Visual Studio Code
+## Features
+
+- Write one prompt and distribute it to multiple AI websites at once
+- Pre-configured support for popular AI tools:
+  - Replit Ghostwriter
+  - Bolt.new
+  - AI Agent Sourcebook
+- Add custom sites with CSS selectors for input fields and submit buttons
+- Save your custom targets for future use
 
 ## Prerequisites
 
 * [node + npm](https://nodejs.org/) (Current Version)
 
-## Option
-
-* [Visual Studio Code](https://code.visualstudio.com/)
-
-## Includes the following
-
-* TypeScript
-* Webpack
-* React
-* Jest
-* Example Code
-    * Chrome Storage
-    * Options Version 2
-    * content script
-    * count up badge number
-    * background
-
 ## Project Structure
 
-* src/typescript: TypeScript source files
-* src/assets: static files
+* src: TypeScript source files
 * dist: Chrome Extension directory
 * dist/js: Generated JavaScript files
 
@@ -38,33 +28,66 @@ Chrome Extension, TypeScript and Visual Studio Code
 npm install
 ```
 
-## Import as Visual Studio Code project
-
-...
-
 ## Build
 
 ```
 npm run build
 ```
 
-## Build in watch mode
+## Development
 
-### terminal
+- Start development server with hot reload:
+  ```
+  npm run watch
+  ```
+- Run tests:
+  ```
+  npm test
+  ```
+- Lint and format code:
+  ```
+  npm run lint
+  ```
+- Type check:
+  ```
+  npm run typecheck
+  ```
 
-```
-npm run watch
-```
+## Load extension to Chrome
 
-### Visual Studio Code
+1. Open Chrome and go to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked" and select the `dist` folder from this repository
 
-Run watch mode.
+## How to Use
 
-type `Ctrl + Shift + B`
+1. Click the extension icon in your Chrome toolbar
+2. Enter your prompt in the textarea
+3. Select the AI tools you want to send the prompt to
+4. Click "Distribute Prompt"
+5. The extension will open tabs for each selected tool and input your prompt
 
-## Load extension to chrome
+## Adding Custom Targets
 
-Load `dist` directory
+1. Click the "Add Custom Target" button
+2. Fill in the following fields:
+   - Name: A descriptive name for the AI tool
+   - URL: The website address
+   - Input Selector: CSS selector for the input field (e.g., `textarea.promptInput`)
+   - Submit Button Selector: (Optional) CSS selector for the submit button
 
-## Test
-`npx jest` or `npm run test`
+## Privacy
+
+This extension does not collect or transmit any data outside of your browser. All configuration is stored locally in your browser's storage.
+
+## Technology Stack
+
+* TypeScript
+* React
+* Webpack
+* Jest
+* Biome (for linting and formatting)
+
+## License
+
+MIT

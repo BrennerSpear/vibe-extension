@@ -1,0 +1,20 @@
+Vibe Extension - Send Prompts to Multiple AI Tools Simultaneously
+
+Boost your AI workflow by sending the same prompt to multiple AI tools at once!
+
+This extension allows you to:
+
+• Write a prompt once and send it to multiple AI tools simultaneously
+• Access pre-configured support for popular tools like Replit Ghostwriter, Bolt.new, and AI Agent Sourcebook
+• Add your own custom AI targets with simple CSS selectors
+• Save all your targets for future use
+
+Perfect for:
+• Comparing AI responses across different models
+• Getting multiple AI opinions on your queries
+• Testing the same prompt against different AI tools
+• Setting up workflows that involve multiple AI assistants
+
+Simple to use, with a clean, intuitive interface. All your settings are stored locally for privacy.
+
+The extension requires tab and storage permissions to open tabs for each target AI tool and store your configurations.
