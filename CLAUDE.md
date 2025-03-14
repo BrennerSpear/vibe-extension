@@ -21,6 +21,7 @@
 - Error handling via try/catch blocks
 - Non-null assertions with ! operator only when necessary
 - Code formatting handled by Biome
+- Use template literals for string interpolation
 
 ## Project Structure
 This is a Chrome extension built with TypeScript and React, using Jest for testing and Webpack for bundling.

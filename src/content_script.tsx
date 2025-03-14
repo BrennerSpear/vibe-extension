@@ -1,300 +1,228 @@
-chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-  if (msg.color) {
-    console.log('Receive color = ' + msg.color)
-    document.body.style.backgroundColor = msg.color
-    sendResponse('Change color to ' + msg.color)
-  } else if (msg.action === 'fillPrompt') {
-    const { prompt, inputSelector, submitSelector } = msg
-    console.log(`Attempting to fill prompt: ${prompt.substring(0, 20)}...`)
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+	if (msg.color) {
+		console.log(`Receive color = ${msg.color}`);
+		document.body.style.backgroundColor = msg.color;
+		sendResponse(`Change color to ${msg.color}`);
+	} else if (msg.action === "fillPrompt") {
+		const { prompt, inputSelector, submitSelector } = msg;
+		console.log(`Attempting to fill prompt: ${prompt.substring(0, 20)}...`);
 
-    // Find the input field
-    let inputElement: HTMLElement | null = null
-    try {
-      console.log('Debug - Current URL:', window.location.href)
-      
-      // Special case for Replit's CodeMirror editor
-      if (window.location.hostname.includes('replit.com')) {
-        console.log('Detected Replit site, using specialized input method')
-        
-        try {
-          // Direct approach for Replit - inject code to access their internal APIs
-          const script = document.createElement('script');
-          script.textContent = `
-            try {
-              // Find the CodeMirror editor instance
-              const editors = document.querySelectorAll('.cm-content');
-              if (editors.length > 0) {
-                const editor = editors[0];
-                
-                // Make sure it's focused
-                editor.focus();
-                
-                // Clear existing content
-                editor.innerHTML = '';
-                
-                // Create a text node with our prompt
-                const textNode = document.createTextNode("${prompt.replace(/"/g, '\\"')}");
-                
-                // Insert the text
-                editor.appendChild(textNode);
-                
-                // Trigger input event
-                editor.dispatchEvent(new Event('input', { bubbles: true }));
-                
-                // Try to find and enable the submit button
-                const submitBtn = document.querySelector('button[data-cy="ai-prompt-submit"]');
-                if (submitBtn) {
-                  // Remove disabled attributes
-                  submitBtn.removeAttribute('disabled');
-                  submitBtn.setAttribute('data-disabled', 'false');
-                  
-                  // Wait a bit then click it
-                  setTimeout(() => {
-                    submitBtn.click();
-                  }, 500);
-                }
-              }
-            } catch (e) {
-              console.error('Replit injection error:', e);
-            }
-          `;
-          document.head.appendChild(script);
-          
-          // Clean up the script after execution
-          setTimeout(() => {
-            if (script.parentNode) {
-              script.parentNode.removeChild(script);
-            }
-          }, 1000);
-          
-          // Set inputElement to the cm-content so the rest of the code works
-          const cmContent = document.querySelector('.cm-content');
-          if (cmContent instanceof HTMLElement) {
-            inputElement = cmContent;
-          }
-          
-          // The script will handle things on its own, so we can skip some steps
-          console.log('Debug - Injected direct script for Replit');
-        } catch (e) {
-          console.error('Error injecting script for Replit:', e);
-          
-          // Fall back to the standard approach
-          const cmContent = document.querySelector('.cm-content');
-          if (cmContent instanceof HTMLElement) {
-            inputElement = cmContent;
-          }
-        }
-      } 
-      
-      // Standard approach for other sites
-      if (!inputElement) {
-        inputElement = document.querySelector(inputSelector)
-      }
+		// Find the input field
+		let inputElement: HTMLElement | null = null;
+		try {
+			console.log("Debug - Current URL:", window.location.href);
 
-      if (!inputElement) {
-        console.error(`Input element not found with selector: ${inputSelector}`)
-        sendResponse({ success: false, error: 'Input element not found' })
-        return
-      }
+			inputElement = document.querySelector(inputSelector);
 
-      // Focus the input element
-      inputElement.focus()
+			if (!inputElement) {
+				console.error(
+					`Input element not found with selector: ${inputSelector}`,
+				);
+				sendResponse({ success: false, error: "Input element not found" });
+				return;
+			}
 
-      // Set the value for standard inputs
-      if (
-        inputElement instanceof HTMLInputElement ||
-        inputElement instanceof HTMLTextAreaElement
-      ) {
-        // Set value directly
-        inputElement.value = prompt
+			// Focus the input element
+			inputElement.focus();
 
-        // Trigger input event to simulate user typing
-        const inputEvent = new Event('input', { bubbles: true })
-        inputElement.dispatchEvent(inputEvent)
+			// Set the value for standard inputs
+			if (
+				inputElement instanceof HTMLInputElement ||
+				inputElement instanceof HTMLTextAreaElement
+			) {
+				// Set value directly
+				inputElement.value = prompt;
 
-        // Trigger change event
-        const changeEvent = new Event('change', { bubbles: true })
-        inputElement.dispatchEvent(changeEvent)
-      } else {
-        // For contenteditable elements
-        if (inputElement.isContentEditable) {
-          console.log('Debug - Found contenteditable element:', inputElement)
-          
-          // Try multiple approaches for contenteditable elements
-          
-          // Approach 1: Using textContent
-          console.log('Debug - Trying textContent approach')
-          // Clear existing content
-          inputElement.textContent = ""
-          
-          // Insert new content
-          inputElement.textContent = prompt
-          
-          // Approach 2: Using innerHTML (some rich text editors use this)
-          console.log('Debug - Trying innerHTML approach')
-          inputElement.innerHTML = prompt
-          
-          // Approach 3: Selection and execCommand approach
-          console.log('Debug - Trying selection/execCommand approach')
-          // Create a range and selection
-          const range = document.createRange()
-          range.selectNodeContents(inputElement)
-          const selection = window.getSelection()
-          if (selection) {
-            selection.removeAllRanges()
-            selection.addRange(range)
-            
-            // Use execCommand to insert text
-            document.execCommand('insertText', false, prompt)
-          }
-          
-          // Approach 4: Direct event simulation
-          console.log('Debug - Trying keyboard event simulation')
-          // Focus the element first
-          inputElement.focus()
-          
-          // Create input and keydown events to simulate typing
-          try {
-            const inputEvent = new InputEvent('input', { 
-              bubbles: true,
-              cancelable: true,
-              data: prompt
-            })
-            inputElement.dispatchEvent(inputEvent)
-          } catch (e) {
-            console.log('Debug - Error creating InputEvent:', e)
-            
-            // Fallback for browsers without InputEvent constructor
-            const simpleInputEvent = new Event('input', { bubbles: true })
-            inputElement.dispatchEvent(simpleInputEvent)
-          }
-          
-          const changeEvent = new Event('change', { bubbles: true })
-          inputElement.dispatchEvent(changeEvent)
-          
-          // For CodeMirror editors (like in Replit)
-          if (inputElement.closest('.cm-editor')) {
-            console.log('Debug - Detected CodeMirror editor, using specialized approach')
-            // Try to find the actual CM editor instance
-            const cmEditor = inputElement.closest('.cm-editor')
-            if (cmEditor) {
-              // Create and dispatch a custom input event
-              cmEditor.dispatchEvent(new Event('input', { bubbles: true }))
-              
-              // Focus the editor area
-              const cmContent = cmEditor.querySelector('.cm-content')
-              if (cmContent instanceof HTMLElement) {
-                cmContent.focus()
-              }
-            }
-          }
-        } else {
-          // Try setting innerText as a fallback
-          inputElement.innerText = prompt
-          inputElement.dispatchEvent(new Event('input', { bubbles: true }))
-          inputElement.dispatchEvent(new Event('change', { bubbles: true }))
-        }
-      }
+				// Trigger input event to simulate user typing
+				const inputEvent = new Event("input", { bubbles: true });
+				inputElement.dispatchEvent(inputEvent);
 
-      // Added keyboard event simulation as a last resort
-      try {
-        console.log('Debug - Trying to simulate keystrokes directly')
-        
-        // Focus the target element one more time
-        inputElement.focus()
-        
-        // Split the prompt into individual characters
-        const chars = prompt.split('')
-        
-        // Simulate pressing each key
-        for (const char of chars) {
-          // Create and dispatch keyboard events
-          const keydownEvent = new KeyboardEvent('keydown', {
-            key: char,
-            code: `Key${char.toUpperCase()}`,
-            bubbles: true,
-            cancelable: true
-          })
-          
-          const keypressEvent = new KeyboardEvent('keypress', {
-            key: char,
-            code: `Key${char.toUpperCase()}`,
-            bubbles: true,
-            cancelable: true
-          })
-          
-          const keyupEvent = new KeyboardEvent('keyup', {
-            key: char,
-            code: `Key${char.toUpperCase()}`,
-            bubbles: true,
-            cancelable: true
-          })
-          
-          // Dispatch the events in sequence
-          inputElement.dispatchEvent(keydownEvent)
-          inputElement.dispatchEvent(keypressEvent)
-          inputElement.dispatchEvent(keyupEvent)
-        }
-      } catch (e) {
-        console.log('Debug - Error simulating key events:', e)
-      }
+				// Trigger change event
+				const changeEvent = new Event("change", { bubbles: true });
+				inputElement.dispatchEvent(changeEvent);
+			} else {
+				// For contenteditable elements
+				if (inputElement.isContentEditable) {
+					console.log("Debug - Found contenteditable element:", inputElement);
 
-      // Try to submit if a submit selector is provided
-      if (submitSelector) {
-        setTimeout(() => {
-          const submitButton = document.querySelector(
-            submitSelector,
-          ) as HTMLElement
-          if (submitButton) {
-            // Check if button is disabled and handle if needed
-            if (submitButton.hasAttribute('disabled') || 
-                submitButton.getAttribute('data-disabled') === 'true' ||
-                submitButton.classList.contains('disabled')) {
-              
-              console.log('Submit button is disabled, attempting to enable it')
-              
-              // Remove disabled attribute
-              submitButton.removeAttribute('disabled')
-              submitButton.setAttribute('data-disabled', 'false')
-              
-              // Remove disabled classes - handle common patterns
-              submitButton.classList.remove('disabled')
-              
-              // For Replit specifically (or similar sites with React)
-              if (window.location.hostname.includes('replit.com')) {
-                // Remove React's disabled property via property descriptor
-                if (Object.getOwnPropertyDescriptor(submitButton, 'disabled')) {
-                  Object.defineProperty(submitButton, 'disabled', {
-                    value: false,
-                    writable: true
-                  })
-                }
-              }
-            }
-            
-            // Click the button
-            submitButton.click()
-            console.log('Submit button clicked')
-          } else {
-            console.warn(
-              `Submit button not found with selector: ${submitSelector}`,
-            )
-          }
-        }, 500)
-      }
+					// Try multiple approaches for contenteditable elements
 
-      sendResponse({ success: true })
-    } catch (error: unknown) {
-      console.error('Error filling prompt:', error)
-      sendResponse({
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      })
-    }
-  } else {
-    sendResponse('Message not recognized')
-  }
+					// Approach 1: Using textContent
+					console.log("Debug - Trying textContent approach");
+					// Clear existing content
+					inputElement.textContent = "";
 
-  // Return true to indicate you wish to send a response asynchronously
-  return true
-})
+					// Insert new content
+					inputElement.textContent = prompt;
+
+					// Approach 2: Using innerHTML (some rich text editors use this)
+					console.log("Debug - Trying innerHTML approach");
+					inputElement.innerHTML = prompt;
+
+					// Approach 3: Selection and execCommand approach
+					console.log("Debug - Trying selection/execCommand approach");
+					// Create a range and selection
+					const range = document.createRange();
+					range.selectNodeContents(inputElement);
+					const selection = window.getSelection();
+					if (selection) {
+						selection.removeAllRanges();
+						selection.addRange(range);
+
+						// Use execCommand to insert text
+						document.execCommand("insertText", false, prompt);
+					}
+
+					// Approach 4: Direct event simulation
+					console.log("Debug - Trying keyboard event simulation");
+					// Focus the element first
+					inputElement.focus();
+
+					// Create input and keydown events to simulate typing
+					try {
+						const inputEvent = new InputEvent("input", {
+							bubbles: true,
+							cancelable: true,
+							data: prompt,
+						});
+						inputElement.dispatchEvent(inputEvent);
+					} catch (e) {
+						console.log("Debug - Error creating InputEvent:", e);
+
+						// Fallback for browsers without InputEvent constructor
+						const simpleInputEvent = new Event("input", { bubbles: true });
+						inputElement.dispatchEvent(simpleInputEvent);
+					}
+
+					const changeEvent = new Event("change", { bubbles: true });
+					inputElement.dispatchEvent(changeEvent);
+
+					// For CodeMirror editors (like in Replit)
+					if (inputElement.closest(".cm-editor")) {
+						console.log(
+							"Debug - Detected CodeMirror editor, using specialized approach",
+						);
+						// Try to find the actual CM editor instance
+						const cmEditor = inputElement.closest(".cm-editor");
+						if (cmEditor) {
+							// Create and dispatch a custom input event
+							cmEditor.dispatchEvent(new Event("input", { bubbles: true }));
+
+							// Focus the editor area
+							const cmContent = cmEditor.querySelector(".cm-content");
+							if (cmContent instanceof HTMLElement) {
+								cmContent.focus();
+							}
+						}
+					}
+				} else {
+					// Try setting innerText as a fallback
+					inputElement.innerText = prompt;
+					inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+					inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+				}
+			}
+
+			// Added keyboard event simulation as a last resort
+			try {
+				console.log("Debug - Trying to simulate keystrokes directly");
+
+				// Focus the target element one more time
+				inputElement.focus();
+
+				// Split the prompt into individual characters
+				const chars = prompt.split("");
+
+				// Simulate pressing each key
+				for (const char of chars) {
+					// Create and dispatch keyboard events
+					const keydownEvent = new KeyboardEvent("keydown", {
+						key: char,
+						code: `Key${char.toUpperCase()}`,
+						bubbles: true,
+						cancelable: true,
+					});
+
+					const keypressEvent = new KeyboardEvent("keypress", {
+						key: char,
+						code: `Key${char.toUpperCase()}`,
+						bubbles: true,
+						cancelable: true,
+					});
+
+					const keyupEvent = new KeyboardEvent("keyup", {
+						key: char,
+						code: `Key${char.toUpperCase()}`,
+						bubbles: true,
+						cancelable: true,
+					});
+
+					// Dispatch the events in sequence
+					inputElement.dispatchEvent(keydownEvent);
+					inputElement.dispatchEvent(keypressEvent);
+					inputElement.dispatchEvent(keyupEvent);
+				}
+			} catch (e) {
+				console.log("Debug - Error simulating key events:", e);
+			}
+
+			// Try to submit if a submit selector is provided
+			if (submitSelector) {
+				setTimeout(() => {
+					const submitButton = document.querySelector(
+						submitSelector,
+					) as HTMLElement;
+					if (submitButton) {
+						// Check if button is disabled and handle if needed
+						if (
+							submitButton.hasAttribute("disabled") ||
+							submitButton.getAttribute("data-disabled") === "true" ||
+							submitButton.classList.contains("disabled")
+						) {
+							console.log("Submit button is disabled, attempting to enable it");
+
+							// Remove disabled attribute
+							submitButton.removeAttribute("disabled");
+							submitButton.setAttribute("data-disabled", "false");
+
+							// Remove disabled classes - handle common patterns
+							submitButton.classList.remove("disabled");
+
+							// For Replit specifically (or similar sites with React)
+							if (window.location.hostname.includes("replit.com")) {
+								// Remove React's disabled property via property descriptor
+								if (Object.getOwnPropertyDescriptor(submitButton, "disabled")) {
+									Object.defineProperty(submitButton, "disabled", {
+										value: false,
+										writable: true,
+									});
+								}
+							}
+						}
+
+						// Click the button
+						submitButton.click();
+						console.log("Submit button clicked");
+					} else {
+						console.warn(
+							`Submit button not found with selector: ${submitSelector}`,
+						);
+					}
+				}, 500);
+			}
+
+			sendResponse({ success: true });
+		} catch (error: unknown) {
+			console.error("Error filling prompt:", error);
+			sendResponse({
+				success: false,
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	} else {
+		sendResponse("Message not recognized");
+	}
+
+	// Return true to indicate you wish to send a response asynchronously
+	return true;
+});
