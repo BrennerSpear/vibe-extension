@@ -302,21 +302,78 @@ const Popup = () => {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={styles.sectionTitle}>Target Tools</h2>
-          <button 
-            onClick={() => setShowCustomForm(true)}
-            style={{
-              backgroundColor: 'transparent',
-              color: '#9d4edd',
-              border: '1px solid #9d4edd',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              height: '24px'
-            }}
-          >
-            + Add Custom
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={async () => {
+                // Get the selected targets
+                const filteredTargets = targets.filter(t => selectedTargets.includes(t.name))
+                
+                if (filteredTargets.length === 0) {
+                  setStatus({ error: 'Please select at least one target' })
+                  return
+                }
+                
+                setStatus({ general: 'Opening missing tabs...' })
+                
+                try {
+                  // Get all existing tabs first (once)
+                  const allExistingTabs = await chrome.tabs.query({})
+                  
+                  // Find all targets that don't already have a tab open
+                  const targetsToOpen = filteredTargets.filter(target => {
+                    // Check if any existing tab has this target's URL
+                    return !allExistingTabs.some(tab => 
+                      tab.url && tab.url.startsWith(target.url)
+                    )
+                  })
+                  
+                  if (targetsToOpen.length > 0) {
+                    // Create all tabs in parallel using Promise.all
+                    await Promise.all(
+                      targetsToOpen.map(target => 
+                        chrome.tabs.create({ url: target.url, active: false })
+                      )
+                    )
+                    setStatus({ general: `Opened ${targetsToOpen.length} missing tab(s)` })
+                  } else {
+                    setStatus({ general: 'All selected targets already have tabs open' })
+                  }
+                } catch (error) {
+                  console.error('Failed to open tabs:', error)
+                  setStatus({ error: 'Error opening tabs' })
+                }
+                
+                setTimeout(() => setStatus({}), 2000)
+              }}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#9d4edd',
+                border: '1px solid #9d4edd',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                height: '24px'
+              }}
+            >
+              Open Missing Tabs
+            </button>
+            <button 
+              onClick={() => setShowCustomForm(true)}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#9d4edd',
+                border: '1px solid #9d4edd',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                height: '24px'
+              }}
+            >
+              + Add Custom
+            </button>
+          </div>
         </div>
         <div style={styles.targetContainer}>
           {targets.map((target) => (
