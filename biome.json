@@ -53,7 +53,6 @@
     }
   },
   "files": {
-    "include": ["**/*.{ts,tsx,js,jsx,json}"],
     "ignore": ["dist/**", "node_modules/**"]
   },
   "overrides": [

@@ -22,14 +22,6 @@
       display: none;
     }
   </style>
-  <script>
-    // Debug: Add window error handler
-    window.addEventListener('error', function(event) {
-      console.error('Script error:', event.error);
-      document.getElementById('error-message').textContent = event.message;
-      document.querySelector('.fallback').style.display = 'block';
-    });
-  </script>
 </head>
 <body>
   <div id="root"></div>

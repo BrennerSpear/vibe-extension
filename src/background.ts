@@ -28,8 +28,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return
     }
 
-    console.log(`Distributing prompt to ${targets.length} targets...`)
-
     // Process targets one by one
     processTargets(prompt, targets)
       .then((results: TargetResult[]) => {
@@ -138,5 +136,5 @@ async function processTargets(
 
 // Initial setup
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Vibe Extension installed/updated')
+  // Extension installed/updated
 })

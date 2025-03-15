@@ -12,19 +12,19 @@ const styles: Record<string, CSSProperties> = {
     padding: '16px',
     backgroundColor: '#1a1a2e',
     color: '#e4e4e4',
-    fontFamily: '"Chakra Petch", system-ui, -apple-system, sans-serif'
+    fontFamily: '"Chakra Petch", system-ui, -apple-system, sans-serif',
   },
   title: {
     color: '#e4e4e4',
     fontSize: '28px',
     marginBottom: '4px',
-    fontWeight: 500
+    fontWeight: 500,
   },
   subtitle: {
     color: '#9d4edd',
     fontSize: '14px',
     marginBottom: '16px',
-    opacity: 0.8
+    opacity: 0.8,
   },
   textarea: {
     width: '100%',
@@ -36,20 +36,20 @@ const styles: Record<string, CSSProperties> = {
     padding: '12px',
     color: '#e4e4e4',
     fontSize: '14px',
-    resize: 'vertical' as const
+    resize: 'vertical' as const,
   },
   sectionTitle: {
     color: '#9d4edd',
     fontSize: '20px',
     marginBottom: '8px',
     fontWeight: 500,
-    letterSpacing: '0.5px'
+    letterSpacing: '0.5px',
   },
   targetContainer: {
     backgroundColor: '#282846',
     borderRadius: '8px',
     padding: '8px',
-    marginBottom: '12px'
+    marginBottom: '12px',
   },
   targetItem: {
     display: 'flex',
@@ -59,15 +59,15 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: '6px',
     border: '1px solid #3f3f5f',
     fontSize: '13px',
-    marginBottom: '4px'
+    marginBottom: '4px',
   },
   checkbox: {
-    accentColor: '#9d4edd'
+    accentColor: '#9d4edd',
   },
   label: {
     marginLeft: '8px',
     marginRight: 'auto',
-    color: '#e4e4e4'
+    color: '#e4e4e4',
   },
   button: {
     backgroundColor: '#9d4edd',
@@ -81,7 +81,7 @@ const styles: Record<string, CSSProperties> = {
     width: 'auto',
     fontWeight: 500,
     height: '40px',
-    letterSpacing: '0.5px'
+    letterSpacing: '0.5px',
   },
   removeButton: {
     backgroundColor: 'transparent',
@@ -96,14 +96,14 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '16px'
+    fontSize: '16px',
   },
   customForm: {
     backgroundColor: '#282846',
     border: '1px solid #3f3f5f',
     borderRadius: '4px',
     padding: '8px',
-    marginBottom: '8px'
+    marginBottom: '8px',
   },
   input: {
     width: '100%',
@@ -113,14 +113,14 @@ const styles: Record<string, CSSProperties> = {
     padding: '6px',
     color: '#e4e4e4',
     marginBottom: '6px',
-    fontSize: '12px'
+    fontSize: '12px',
   },
   status: {
     padding: '8px',
     borderRadius: '4px',
     marginTop: '8px',
     backgroundColor: '#282846',
-    border: '1px solid #3f3f5f'
+    border: '1px solid #3f3f5f',
   },
   error: {
     color: '#ff6b6b',
@@ -128,12 +128,9 @@ const styles: Record<string, CSSProperties> = {
     padding: '8px',
     borderRadius: '4px',
     marginTop: '8px',
-    border: '1px solid #ff6b6b'
-  }
+    border: '1px solid #ff6b6b',
+  },
 }
-
-// Debug: Add global error handler
-console.log('Popup script loaded')
 
 const Popup = () => {
   const [prompt, setPrompt] = useState('')
@@ -152,20 +149,23 @@ const Popup = () => {
 
   useEffect(() => {
     // Load saved targets, prompt, and selected targets from storage
-    chrome.storage.local.get(['vibeTargets', 'vibePrompt', 'vibeSelectedTargets'], (result) => {
-      if (result.vibeTargets) {
-        setTargets(result.vibeTargets)
-      }
-      if (result.vibeSelectedTargets) {
-        setSelectedTargets(result.vibeSelectedTargets)
-      } else if (result.vibeTargets) {
-        // Default to all targets selected if no selection is saved
-        setSelectedTargets(result.vibeTargets.map((t: Target) => t.name))
-      }
-      if (result.vibePrompt) {
-        setPrompt(result.vibePrompt)
-      }
-    })
+    chrome.storage.local.get(
+      ['vibeTargets', 'vibePrompt', 'vibeSelectedTargets'],
+      (result) => {
+        if (result.vibeTargets) {
+          setTargets(result.vibeTargets)
+        }
+        if (result.vibeSelectedTargets) {
+          setSelectedTargets(result.vibeSelectedTargets)
+        } else if (result.vibeTargets) {
+          // Default to all targets selected if no selection is saved
+          setSelectedTargets(result.vibeTargets.map((t: Target) => t.name))
+        }
+        if (result.vibePrompt) {
+          setPrompt(result.vibePrompt)
+        }
+      },
+    )
   }, [])
 
   const saveTargets = (newTargets: Target[]) => {
@@ -174,23 +174,23 @@ const Popup = () => {
   }
 
   const handleTargetSelection = (targetName: string) => {
-    let newSelectedTargets;
+    let newSelectedTargets
     if (selectedTargets.includes(targetName)) {
-      newSelectedTargets = selectedTargets.filter((name) => name !== targetName);
+      newSelectedTargets = selectedTargets.filter((name) => name !== targetName)
     } else {
-      newSelectedTargets = [...selectedTargets, targetName];
+      newSelectedTargets = [...selectedTargets, targetName]
     }
-    
+
     // Update state and save to storage
-    setSelectedTargets(newSelectedTargets);
-    chrome.storage.local.set({ vibeSelectedTargets: newSelectedTargets });
+    setSelectedTargets(newSelectedTargets)
+    chrome.storage.local.set({ vibeSelectedTargets: newSelectedTargets })
   }
-  
+
   const savePrompt = (newPrompt: string) => {
     setPrompt(newPrompt)
     chrome.storage.local.set({ vibePrompt: newPrompt })
   }
-  
+
   const clearPrompt = () => {
     setPrompt('')
     chrome.storage.local.remove('vibePrompt')
@@ -201,17 +201,17 @@ const Popup = () => {
       // Mark as custom target
       const customTargetWithFlag = {
         ...customTarget,
-        isCustom: true
+        isCustom: true,
       }
-      
+
       const newTargets = [...targets, customTargetWithFlag]
       saveTargets(newTargets)
-      
+
       // Update selected targets and save to storage
       const newSelectedTargets = [...selectedTargets, customTarget.name]
       setSelectedTargets(newSelectedTargets)
       chrome.storage.local.set({ vibeSelectedTargets: newSelectedTargets })
-      
+
       setCustomTarget({
         name: '',
         url: '',
@@ -225,9 +225,11 @@ const Popup = () => {
   const removeTarget = (targetName: string) => {
     const newTargets = targets.filter((t) => t.name !== targetName)
     saveTargets(newTargets)
-    
+
     // Update selected targets and save to storage
-    const newSelectedTargets = selectedTargets.filter((name) => name !== targetName)
+    const newSelectedTargets = selectedTargets.filter(
+      (name) => name !== targetName,
+    )
     setSelectedTargets(newSelectedTargets)
     chrome.storage.local.set({ vibeSelectedTargets: newSelectedTargets })
   }
@@ -270,12 +272,20 @@ const Popup = () => {
   return (
     <div style={styles.container}>
       <div style={styles.title}>Vibe Aggregator</div>
-      <div style={styles.subtitle}>Distribute your prompts to multiple AI tools simultaneously</div>
+      <div style={styles.subtitle}>
+        Distribute your prompts to multiple AI tools simultaneously
+      </div>
 
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <h2 style={styles.sectionTitle}>Your Prompt</h2>
-          <button 
+          <button
             onClick={clearPrompt}
             style={{
               backgroundColor: 'transparent',
@@ -285,7 +295,7 @@ const Popup = () => {
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '12px',
-              height: '24px'
+              height: '24px',
             }}
           >
             Clear
@@ -300,49 +310,60 @@ const Popup = () => {
       </div>
 
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <h2 style={styles.sectionTitle}>Target Tools</h2>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
+            <button
               onClick={async () => {
                 // Get the selected targets
-                const filteredTargets = targets.filter(t => selectedTargets.includes(t.name))
-                
+                const filteredTargets = targets.filter((t) =>
+                  selectedTargets.includes(t.name),
+                )
+
                 if (filteredTargets.length === 0) {
                   setStatus({ error: 'Please select at least one target' })
                   return
                 }
-                
+
                 setStatus({ general: 'Opening missing tabs...' })
-                
+
                 try {
                   // Get all existing tabs first (once)
                   const allExistingTabs = await chrome.tabs.query({})
-                  
+
                   // Find all targets that don't already have a tab open
-                  const targetsToOpen = filteredTargets.filter(target => {
+                  const targetsToOpen = filteredTargets.filter((target) => {
                     // Check if any existing tab has this target's URL
-                    return !allExistingTabs.some(tab => 
-                      tab.url && tab.url.startsWith(target.url)
+                    return !allExistingTabs.some((tab) =>
+                      tab.url?.startsWith(target.url),
                     )
                   })
-                  
+
                   if (targetsToOpen.length > 0) {
                     // Create all tabs in parallel using Promise.all
                     await Promise.all(
-                      targetsToOpen.map(target => 
-                        chrome.tabs.create({ url: target.url, active: false })
-                      )
+                      targetsToOpen.map((target) =>
+                        chrome.tabs.create({ url: target.url, active: false }),
+                      ),
                     )
-                    setStatus({ general: `Opened ${targetsToOpen.length} missing tab(s)` })
+                    setStatus({
+                      general: `Opened ${targetsToOpen.length} missing tab(s)`,
+                    })
                   } else {
-                    setStatus({ general: 'All selected targets already have tabs open' })
+                    setStatus({
+                      general: 'All selected targets already have tabs open',
+                    })
                   }
                 } catch (error) {
-                  console.error('Failed to open tabs:', error)
                   setStatus({ error: 'Error opening tabs' })
                 }
-                
+
                 setTimeout(() => setStatus({}), 2000)
               }}
               style={{
@@ -353,12 +374,12 @@ const Popup = () => {
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '12px',
-                height: '24px'
+                height: '24px',
               }}
             >
               Open Missing Tabs
             </button>
-            <button 
+            <button
               onClick={() => setShowCustomForm(true)}
               style={{
                 backgroundColor: 'transparent',
@@ -368,7 +389,7 @@ const Popup = () => {
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '12px',
-                height: '24px'
+                height: '24px',
               }}
             >
               + Add Custom
@@ -377,10 +398,7 @@ const Popup = () => {
         </div>
         <div style={styles.targetContainer}>
           {targets.map((target) => (
-            <div
-              key={target.name}
-              style={styles.targetItem}
-            >
+            <div key={target.name} style={styles.targetItem}>
               <input
                 type="checkbox"
                 id={target.name}
@@ -388,10 +406,7 @@ const Popup = () => {
                 onChange={() => handleTargetSelection(target.name)}
                 style={styles.checkbox}
               />
-              <label
-                htmlFor={target.name}
-                style={styles.label}
-              >
+              <label htmlFor={target.name} style={styles.label}>
                 {target.name} ({target.url})
               </label>
               {target.isCustom && (
@@ -462,15 +477,20 @@ const Popup = () => {
               />
             </div>
             <div>
-              <button 
-                onClick={addCustomTarget} 
-                style={{...styles.button, marginRight: '10px'}}
+              <button
+                onClick={addCustomTarget}
+                style={{ ...styles.button, marginRight: '10px' }}
               >
                 Add Target
               </button>
-              <button 
+              <button
                 onClick={() => setShowCustomForm(false)}
-                style={{...styles.button, backgroundColor: '#282846', border: '1px solid #9d4edd', color: '#9d4edd'}}
+                style={{
+                  ...styles.button,
+                  backgroundColor: '#282846',
+                  border: '1px solid #9d4edd',
+                  color: '#9d4edd',
+                }}
               >
                 Cancel
               </button>
@@ -481,27 +501,26 @@ const Popup = () => {
 
       <button
         onClick={distributePrompt}
-        style={{...styles.button, marginTop: '12px', width: '100%', height: '40px', fontSize: '14px'}}
+        style={{
+          ...styles.button,
+          marginTop: '12px',
+          width: '100%',
+          height: '40px',
+          fontSize: '14px',
+        }}
       >
         Distribute Prompt
       </button>
 
-      {status.error && (
-        <div style={styles.error}>{status.error}</div>
-      )}
-      {status.general && (
-        <div style={styles.status}>{status.general}</div>
-      )}
+      {status.error && <div style={styles.error}>{status.error}</div>}
+      {status.general && <div style={styles.status}>{status.general}</div>}
     </div>
   )
 }
 
-// Debug: Check if root element exists
 const rootElement = document.getElementById('root')
-console.log('Root element:', rootElement)
 
 if (!rootElement) {
-  console.error('Root element not found')
   const fallback = document.querySelector('.fallback')
   if (fallback instanceof HTMLElement) {
     fallback.style.display = 'block'
