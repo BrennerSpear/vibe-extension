@@ -3,6 +3,7 @@ export interface Target {
 	url: string;
 	inputSelector: string;
 	submitSelector?: string;
+	isCustom?: boolean;
 }
 
 const defaultTargets: Target[] = [
@@ -21,21 +22,20 @@ const defaultTargets: Target[] = [
 	{
 		name: "Lovable.dev",
 		url: "https://lovable.dev/",
-		inputSelector: "textarea.prompt-textarea",
-		submitSelector: "button.submit-button",
+		inputSelector: "textarea#chatinput",
+		submitSelector: "button#chatinput-send-message-button",
 	},
 	{
 		name: "V0.dev",
 		url: "https://v0.dev/",
-		inputSelector: "textarea[placeholder*='Describe your webpage']",
-		submitSelector: "button[type='submit']",
+		inputSelector: "textarea#chat-main-textarea",
+		submitSelector: "button[data-testid='prompt-form-send-button']",
 	},
 	{
 		name: "Bolt.new",
 		url: "https://bolt.new/",
-		inputSelector:
-			"textarea.react-scroll-to-bottom--css-jjtwn-1wbg1rp[placeholder*='Message Bolt']",
-		submitSelector: "button[aria-label='Send message']",
+		inputSelector:"textarea[translate='no']",
+		submitSelector: "button.absolute.flex.justify-center",
 	},
 ];
 

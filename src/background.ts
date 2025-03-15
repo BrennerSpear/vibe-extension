@@ -68,6 +68,11 @@ async function processTargets(
       const existingTabs = await chrome.tabs.query({ url: target.url + '*' })
       let tab: chrome.tabs.Tab
 
+      // Add a small delay between tab operations
+      if (target !== targets[0]) {
+        await new Promise((resolve) => setTimeout(resolve, 200))
+      }
+
       if (existingTabs.length > 0) {
         // Use the first existing tab
         tab = existingTabs[0]

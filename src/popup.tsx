@@ -2,6 +2,136 @@ import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import defaultTargets, { Target } from './defaultTargets'
 
+import type { CSSProperties } from 'react'
+
+const styles: Record<string, CSSProperties> = {
+  container: {
+    width: '480px',
+    // paddingTop: '16px',
+    // paddingBottom: '16px',
+    padding: '16px',
+    backgroundColor: '#1a1a2e',
+    color: '#e4e4e4',
+    fontFamily: '"Chakra Petch", system-ui, -apple-system, sans-serif'
+  },
+  title: {
+    color: '#e4e4e4',
+    fontSize: '28px',
+    marginBottom: '4px',
+    fontWeight: 500
+  },
+  subtitle: {
+    color: '#9d4edd',
+    fontSize: '14px',
+    marginBottom: '16px',
+    opacity: 0.8
+  },
+  textarea: {
+    width: '100%',
+    height: '80px',
+    marginBottom: '12px',
+    backgroundColor: '#282846',
+    border: '1px solid #3f3f5f',
+    borderRadius: '8px',
+    padding: '12px',
+    color: '#e4e4e4',
+    fontSize: '14px',
+    resize: 'vertical' as const
+  },
+  sectionTitle: {
+    color: '#9d4edd',
+    fontSize: '20px',
+    marginBottom: '8px',
+    fontWeight: 500,
+    letterSpacing: '0.5px'
+  },
+  targetContainer: {
+    backgroundColor: '#282846',
+    borderRadius: '8px',
+    padding: '8px',
+    marginBottom: '12px'
+  },
+  targetItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '10px',
+    backgroundColor: '#1a1a2e',
+    borderRadius: '6px',
+    border: '1px solid #3f3f5f',
+    fontSize: '13px',
+    marginBottom: '4px'
+  },
+  checkbox: {
+    accentColor: '#9d4edd'
+  },
+  label: {
+    marginLeft: '8px',
+    marginRight: 'auto',
+    color: '#e4e4e4'
+  },
+  button: {
+    backgroundColor: '#9d4edd',
+    color: '#ffffff',
+    border: 'none',
+    padding: '12px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'all 0.2s ease',
+    width: 'auto',
+    fontWeight: 500,
+    height: '40px',
+    letterSpacing: '0.5px'
+  },
+  removeButton: {
+    backgroundColor: 'transparent',
+    color: '#9d4edd',
+    border: '1px solid #9d4edd',
+    padding: '4px',
+    borderRadius: '4px',
+    marginLeft: '8px',
+    cursor: 'pointer',
+    minWidth: '28px',
+    height: '28px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '16px'
+  },
+  customForm: {
+    backgroundColor: '#282846',
+    border: '1px solid #3f3f5f',
+    borderRadius: '4px',
+    padding: '8px',
+    marginBottom: '8px'
+  },
+  input: {
+    width: '100%',
+    backgroundColor: '#1a1a2e',
+    border: '1px solid #3f3f5f',
+    borderRadius: '4px',
+    padding: '6px',
+    color: '#e4e4e4',
+    marginBottom: '6px',
+    fontSize: '12px'
+  },
+  status: {
+    padding: '8px',
+    borderRadius: '4px',
+    marginTop: '8px',
+    backgroundColor: '#282846',
+    border: '1px solid #3f3f5f'
+  },
+  error: {
+    color: '#ff6b6b',
+    backgroundColor: '#2d232f',
+    padding: '8px',
+    borderRadius: '4px',
+    marginTop: '8px',
+    border: '1px solid #ff6b6b'
+  }
+}
+
 // Debug: Add global error handler
 console.log('Popup script loaded')
 
@@ -21,11 +151,19 @@ const Popup = () => {
   const [showCustomForm, setShowCustomForm] = useState(false)
 
   useEffect(() => {
-    // Load saved targets from storage
-    chrome.storage.local.get(['vibeTargets'], (result) => {
+    // Load saved targets, prompt, and selected targets from storage
+    chrome.storage.local.get(['vibeTargets', 'vibePrompt', 'vibeSelectedTargets'], (result) => {
       if (result.vibeTargets) {
         setTargets(result.vibeTargets)
+      }
+      if (result.vibeSelectedTargets) {
+        setSelectedTargets(result.vibeSelectedTargets)
+      } else if (result.vibeTargets) {
+        // Default to all targets selected if no selection is saved
         setSelectedTargets(result.vibeTargets.map((t: Target) => t.name))
+      }
+      if (result.vibePrompt) {
+        setPrompt(result.vibePrompt)
       }
     })
   }, [])
@@ -36,18 +174,44 @@ const Popup = () => {
   }
 
   const handleTargetSelection = (targetName: string) => {
+    let newSelectedTargets;
     if (selectedTargets.includes(targetName)) {
-      setSelectedTargets(selectedTargets.filter((name) => name !== targetName))
+      newSelectedTargets = selectedTargets.filter((name) => name !== targetName);
     } else {
-      setSelectedTargets([...selectedTargets, targetName])
+      newSelectedTargets = [...selectedTargets, targetName];
     }
+    
+    // Update state and save to storage
+    setSelectedTargets(newSelectedTargets);
+    chrome.storage.local.set({ vibeSelectedTargets: newSelectedTargets });
+  }
+  
+  const savePrompt = (newPrompt: string) => {
+    setPrompt(newPrompt)
+    chrome.storage.local.set({ vibePrompt: newPrompt })
+  }
+  
+  const clearPrompt = () => {
+    setPrompt('')
+    chrome.storage.local.remove('vibePrompt')
   }
 
   const addCustomTarget = () => {
     if (customTarget.name && customTarget.url && customTarget.inputSelector) {
-      const newTargets = [...targets, customTarget]
+      // Mark as custom target
+      const customTargetWithFlag = {
+        ...customTarget,
+        isCustom: true
+      }
+      
+      const newTargets = [...targets, customTargetWithFlag]
       saveTargets(newTargets)
-      setSelectedTargets([...selectedTargets, customTarget.name])
+      
+      // Update selected targets and save to storage
+      const newSelectedTargets = [...selectedTargets, customTarget.name]
+      setSelectedTargets(newSelectedTargets)
+      chrome.storage.local.set({ vibeSelectedTargets: newSelectedTargets })
+      
       setCustomTarget({
         name: '',
         url: '',
@@ -61,7 +225,11 @@ const Popup = () => {
   const removeTarget = (targetName: string) => {
     const newTargets = targets.filter((t) => t.name !== targetName)
     saveTargets(newTargets)
-    setSelectedTargets(selectedTargets.filter((name) => name !== targetName))
+    
+    // Update selected targets and save to storage
+    const newSelectedTargets = selectedTargets.filter((name) => name !== targetName)
+    setSelectedTargets(newSelectedTargets)
+    chrome.storage.local.set({ vibeSelectedTargets: newSelectedTargets })
   }
 
   const distributePrompt = async () => {
@@ -91,6 +259,7 @@ const Popup = () => {
       (response) => {
         if (response?.success) {
           setStatus({ general: 'Prompt distributed successfully!' })
+          // Note: We no longer clear the prompt here
         } else {
           setStatus({ error: response?.error || 'An error occurred' })
         }
@@ -99,63 +268,90 @@ const Popup = () => {
   }
 
   return (
-    <div style={{ minWidth: '500px', padding: '20px' }}>
-      <h1>Vibe Extension</h1>
-      <p>Distribute your prompts to multiple AI tools simultaneously</p>
+    <div style={styles.container}>
+      <div style={styles.title}>Vibe Aggregator</div>
+      <div style={styles.subtitle}>Distribute your prompts to multiple AI tools simultaneously</div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <h2>Your Prompt</h2>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={styles.sectionTitle}>Your Prompt</h2>
+          <button 
+            onClick={clearPrompt}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#9d4edd',
+              border: '1px solid #9d4edd',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              height: '24px'
+            }}
+          >
+            Clear
+          </button>
+        </div>
         <textarea
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          style={{ width: '100%', height: '100px', marginBottom: '10px' }}
+          onChange={(e) => savePrompt(e.target.value)}
+          style={styles.textarea}
           placeholder="Enter your prompt here..."
         />
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <h2>Target AI Tools</h2>
-        <div style={{ marginBottom: '10px' }}>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={styles.sectionTitle}>Target Tools</h2>
+          <button 
+            onClick={() => setShowCustomForm(true)}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#9d4edd',
+              border: '1px solid #9d4edd',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              height: '24px'
+            }}
+          >
+            + Add Custom
+          </button>
+        </div>
+        <div style={styles.targetContainer}>
           {targets.map((target) => (
             <div
               key={target.name}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginBottom: '5px',
-              }}
+              style={styles.targetItem}
             >
               <input
                 type="checkbox"
                 id={target.name}
                 checked={selectedTargets.includes(target.name)}
                 onChange={() => handleTargetSelection(target.name)}
+                style={styles.checkbox}
               />
               <label
                 htmlFor={target.name}
-                style={{ marginLeft: '5px', marginRight: 'auto' }}
+                style={styles.label}
               >
                 {target.name} ({target.url})
               </label>
-              <button
-                onClick={() => removeTarget(target.name)}
-                style={{ marginLeft: '10px', padding: '2px 5px' }}
-              >
-                X
-              </button>
+              {target.isCustom && (
+                <button
+                  onClick={() => removeTarget(target.name)}
+                  style={styles.removeButton}
+                >
+                  ×
+                </button>
+              )}
             </div>
           ))}
         </div>
 
         {showCustomForm ? (
-          <div
-            style={{
-              border: '1px solid #ccc',
-              padding: '10px',
-              marginBottom: '10px',
-            }}
-          >
-            <h3>Add Custom Target</h3>
+          <div style={styles.customForm}>
+            <h3 style={styles.sectionTitle}>Add Custom Target</h3>
             <div style={{ marginBottom: '5px' }}>
               <label>Name: </label>
               <input
@@ -164,7 +360,7 @@ const Popup = () => {
                 onChange={(e) =>
                   setCustomTarget({ ...customTarget, name: e.target.value })
                 }
-                style={{ width: '100%' }}
+                style={styles.input}
               />
             </div>
             <div style={{ marginBottom: '5px' }}>
@@ -175,7 +371,7 @@ const Popup = () => {
                 onChange={(e) =>
                   setCustomTarget({ ...customTarget, url: e.target.value })
                 }
-                style={{ width: '100%' }}
+                style={styles.input}
               />
             </div>
             <div style={{ marginBottom: '5px' }}>
@@ -189,7 +385,7 @@ const Popup = () => {
                     inputSelector: e.target.value,
                   })
                 }
-                style={{ width: '100%' }}
+                style={styles.input}
                 placeholder="CSS Selector for input field (e.g., textarea.myClass)"
               />
             </div>
@@ -204,44 +400,41 @@ const Popup = () => {
                     submitSelector: e.target.value,
                   })
                 }
-                style={{ width: '100%' }}
+                style={styles.input}
                 placeholder="CSS Selector for submit button (e.g., button.send)"
               />
             </div>
             <div>
-              <button onClick={addCustomTarget} style={{ marginRight: '5px' }}>
-                Add
+              <button 
+                onClick={addCustomTarget} 
+                style={{...styles.button, marginRight: '10px'}}
+              >
+                Add Target
               </button>
-              <button onClick={() => setShowCustomForm(false)}>Cancel</button>
+              <button 
+                onClick={() => setShowCustomForm(false)}
+                style={{...styles.button, backgroundColor: '#282846', border: '1px solid #9d4edd', color: '#9d4edd'}}
+              >
+                Cancel
+              </button>
             </div>
           </div>
-        ) : (
-          <button onClick={() => setShowCustomForm(true)}>
-            + Add Custom Target
-          </button>
-        )}
+        ) : null}
       </div>
 
       <button
         onClick={distributePrompt}
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#4285f4',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '16px',
-        }}
+        style={{...styles.button, marginTop: '12px', width: '100%', height: '40px', fontSize: '14px'}}
       >
         Distribute Prompt
       </button>
 
       {status.error && (
-        <p style={{ color: 'red', marginTop: '10px' }}>{status.error}</p>
+        <div style={styles.error}>{status.error}</div>
       )}
-
-      {status.general && <p style={{ marginTop: '10px' }}>{status.general}</p>}
+      {status.general && (
+        <div style={styles.status}>{status.general}</div>
+      )}
     </div>
   )
 }
