@@ -11,7 +11,7 @@ const defaultTargets: Target[] = [
     name: 'Replit',
     url: 'https://replit.com/~',
     inputSelector: '.cm-content', // Target the contenteditable div directly
-    submitSelector: "button[data-cy='ai-prompt-submit']",
+    submitSelector: 'button.css-1dz4r82',
   },
   {
     name: 'Srcbook',

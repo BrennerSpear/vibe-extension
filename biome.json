@@ -35,7 +35,8 @@
         "noMisleadingInstantiator": "error",
         "noUnsafeDeclarationMerging": "error",
         "useAwait": "off",
-        "useNamespaceKeyword": "error"
+        "useNamespaceKeyword": "error",
+        "noImplicitAnyLet": "off"
       }
     }
   },
